@@ -2,24 +2,31 @@ import csv
 from io import StringIO
 from collections import defaultdict, deque
 
-def generate_matrices(edges_str: str, root_id_str: str) -> tuple[list[list[bool]], ...]:
+def main(edges_str: str, root_id_str: str) -> tuple[list[list[int]], list[list[int]], list[list[int]], list[list[int]], list[list[int]]]:
     graph = defaultdict(list)
     nodes = set()
-    csv_reader = csv.reader(StringIO(edges_str))
+    
+    file_content = edges_str.strip()
+    csv_reader = csv.reader(StringIO(file_content))
+    
     for row in csv_reader:
-        if len(row) != 2:
+        if len(row) < 2:
             continue
         u, v = row[0].strip(), row[1].strip()
+        if not u or not v:
+            continue
         graph[u].append(v)
         nodes.add(u)
         nodes.add(v)
     
-    node_list = sorted(list(nodes))
-    node_map = {node: i for i, node in enumerate(node_list)}
+    if root_id_str not in nodes:
+        nodes.add(root_id_str)
+
+    other_nodes = sorted([n for n in nodes if n != root_id_str])
+    node_list = [root_id_str] + other_nodes
     n = len(node_list)
 
-    parent = {node: None for node in nodes}
-    children = defaultdict(list)
+    parent = {node: None for node in node_list}
     ancestors = defaultdict(set)
     
     q = deque([root_id_str])
@@ -31,13 +38,9 @@ def generate_matrices(edges_str: str, root_id_str: str) -> tuple[list[list[bool]
             if v not in visited:
                 visited.add(v)
                 parent[v] = u
-                children[u].append(v)
+                ancestors[v].add(u)
+                ancestors[v].update(ancestors[u])
                 q.append(v)
-
-                current_ancestor = parent[v]
-                while current_ancestor:
-                    ancestors[v].add(current_ancestor)
-                    current_ancestor = parent[current_ancestor]
 
     gamma1 = [[0] * n for _ in range(n)]
     gamma2 = [[0] * n for _ in range(n)]
@@ -56,13 +59,13 @@ def generate_matrices(edges_str: str, root_id_str: str) -> tuple[list[list[bool]
             if parent[u] == v:
                 gamma2[i][j] = 1
 
-            if u in ancestors[v]:
+            if u in ancestors[v] and parent[v] != u:
                 gamma3[i][j] = 1
 
-            if v in ancestors[u]:
+            if v in ancestors[u] and parent[u] != v:
                 gamma4[i][j] = 1
             
-            if parent[u] is not None and parent[u] == parent[v] and u != v:
+            if i != j and parent[u] is not None and parent[u] == parent[v]:
                 gamma5[i][j] = 1
 
     return (gamma1, gamma2, gamma3, gamma4, gamma5)
@@ -74,7 +77,7 @@ if __name__ == '__main__':
         csv_data = file.read()
     root = "1"
     
-    matrices = generate_matrices(csv_data, root)
+    matrices = main(csv_data, root)
     
     g1, g2, g3, g4, g5 = matrices
     

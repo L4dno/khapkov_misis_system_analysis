@@ -88,8 +88,8 @@ def calculate_fuzzy_control_output(temperature: float, temp_linguistic_variable:
     optimal_control_value = get_crisp_output_mom(control_samples, aggregated_curve)
     return optimal_control_value
 
-def run_fuzzy_logic_system(lvinput_path: str = 'lvinput.json', lvoutput_path: str = 'lvoutput.json', 
-                           rules_path: str = 'rules.json', input_temp: float = 19.0) -> float:
+def main(lvinput_path: str = 'lvinput.json', lvoutput_path: str = 'lvoutput.json', 
+         rules_path: str = 'rules.json', T: float = 19.0) -> float:
     lvinput_json = load_json_from_path(lvinput_path)
     lvoutput_json = load_json_from_path(lvoutput_path)
     rules_json = load_json_from_path(rules_path)
@@ -101,10 +101,10 @@ def run_fuzzy_logic_system(lvinput_path: str = 'lvinput.json', lvoutput_path: st
     temp_ling_var = temp_data["температура"]
     control_ling_var = control_data["нагрев"]
 
-    optimal_s = calculate_fuzzy_control_output(input_temp, temp_ling_var, control_ling_var, rules_data)
+    optimal_s = calculate_fuzzy_control_output(T, temp_ling_var, control_ling_var, rules_data)
     return optimal_s
 
 if __name__ == "__main__":
     test_temp = 19.0
-    optimal_value = run_fuzzy_logic_system(input_temp=test_temp)
+    optimal_value = main(T=test_temp)
     print(f"Для температуры {test_temp:.2f}°C оптимальное управление: {optimal_value:.2f}")
